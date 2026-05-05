@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="he" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>סימולטור פיצוי לעסקים | יניב כהן רואה חשבון</title>
+<style>
+:root{
+  --bg:#f7f6f2;--surface:#fdfcf8;--surface2:#f0ece4;--text:#1e1c18;--muted:#706b62;
+  --primary:#0e6b71;--primary2:#0a4c52;--border:#dad4c8;
+  --success:#3b7820;--warn:#b86a13;--error:#9e3056;
+  --shadow:0 8px 28px rgba(20,18,12,.09);--r:16px;
+}
+[data-theme="dark"]{
+  --bg:#171614;--surface:#201e1b;--surface2:#2a2723;--text:#e8e2d8;--muted:#b0a99e;
+  --primary:#6aadb5;--primary2:#90cfd6;--border:#393530;
+  --success:#7ec85a;--warn:#f0a64a;--error:#df7aa3;
+  --shadow:0 10px 32px rgba(0,0,0,.38);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,"Noto Sans Hebrew",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100dvh}
+.wrap{max-width:1180px;margin:auto;padding:20px}
+
+/* HEADER */
+.header{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:22px 26px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{display:flex;gap:14px;align-items:center}
+.logo-mark{display:none}
+.logo-mark::before,.logo-mark::after{content:"";position:absolute;background:#fff;border-radius:999px;opacity:.92}
+.logo-mark::before{width:7px;height:24px;right:10px;top:10px;transform:rotate(18deg)}
+.logo-mark::after{width:7px;height:16px;right:22px;top:17px;transform:rotate(18deg)}
+.logo-text small{color:var(--muted);font-size:13px;display:block}
+.logo-text strong{font-size:17px}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{appearance:none;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+.badge{display:inline-block;padding:4px 11px;border-radius:999px;background:rgba(14,107,113,.1);color:var(--primary);font-size:12px;font-weight:700;margin-bottom:10px}
+
+/* MAIN GRID */
+.main{display:grid;grid-template-columns:1.3fr .7fr;gap:18px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:22px}
+.card h2{font-size:18px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+/* FIELDS */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+label{font-size:13px;font-weight:700}
+input,select{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font-size:14px}
+input:focus,select:focus{outline:2px solid var(--primary);outline-offset:1px}
+.help{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* TOGGLES */
+.toggles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.toggle-item{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--border);border-radius:12px;padding:11px;background:var(--surface2);cursor:pointer}
+.toggle-item input[type=checkbox]{width:auto;margin-top:3px;accent-color:var(--primary)}
+.toggle-item span{font-size:13px}
+.toggle-item strong{display:block;font-size:13px}
+
+/* RESULTS */
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:14px}
+.result-card h2{font-size:18px;margin-bottom:4px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px}
+.kpi .label{font-size:12px;color:var(--muted)}
+.kpi .val{font-size:24px;font-weight:800;margin-top:6px}
+.green{color:var(--success)} .red{color:var(--error)} .orange{color:var(--warn)}
+.summary-box{display:flex;flex-direction:column;gap:8px}
+.summary-box .line{padding:10px 13px;border:1px dashed var(--border);border-radius:10px;font-size:13px}
+.note{padding:12px 14px;border:1px solid rgba(184,106,19,.35);background:rgba(184,106,19,.06);border-radius:12px;font-size:12px;color:var(--muted)}
+
+/* TABLE */
+.table-wrap{margin-top:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.table-wrap h3{padding:14px 18px;font-size:15px;border-bottom:1px solid var(--border);background:var(--surface2)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 16px;border-bottom:1px solid var(--border);text-align:right;font-size:14px}
+th{background:var(--surface2);font-size:13px;font-weight:700;color:var(--muted)}
+tr:last-child td{border-bottom:none}
+.highlight td{background:rgba(14,107,113,.06);font-weight:700}
+.highlight td:last-child{color:var(--primary);font-size:16px}
+
+/* EMBED */
+.embed-card{margin-top:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
+.embed-card h3{font-size:15px;margin-bottom:12px}
+.embed-code{white-space:pre-wrap;font-family:monospace;font-size:12px;background:var(--surface2);padding:12px;border-radius:10px;border:1px solid var(--border);direction:ltr;text-align:left;overflow-x:auto}
+.embed-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+
+.footer{margin-top:16px;font-size:12px;color:var(--muted);text-align:center;padding:10px}
+@media(max-width:860px){.main,.fields,.kpis,.toggles{grid-template-columns:1fr}.field.full{grid-column:1}}
+
+  .law-tables { margin-top: 18px; }
+  .law-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:22px;margin-bottom:14px }
+  .law-card h3 { font-size:15px;margin-bottom:8px;color:var(--primary) }
+  .law-note { font-size:12px;color:var(--muted);margin-bottom:10px }
+  .law-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px }
+  .law-table { width:100%;border-collapse:collapse;font-size:13px }
+  .law-table th { background:var(--surface2);padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--muted);font-size:12px }
+  .law-table td { padding:8px 10px;border-bottom:1px solid var(--border);text-align:right }
+  .law-table tr.active-row td { background:rgba(14,107,113,.12);font-weight:700;color:var(--primary) }
+  @media(max-width:860px){ .law-grid { grid-template-columns:1fr } }
+
+
+  /* TOOLTIPS */
+  .field-wrap{position:relative;display:flex;flex-direction:column;gap:6px}
+  .tip-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--primary);color:#fff;font-size:11px;font-weight:700;cursor:pointer;border:none;flex-shrink:0;opacity:.8;transition:opacity .15s;vertical-align:middle}
+  .tip-btn:hover{opacity:1}
+  .field-label-row{display:inline-flex;align-items:center;gap:6px;width:100%}
+  .field-label-row .tip-btn{margin-right:0}
+  .tip-popup{display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:9999;width:260px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--text);box-shadow:0 8px 28px rgba(0,0,0,.18);margin-top:0}
+  .tip-popup.show{display:block}
+  .tip-popup strong{display:block;margin-bottom:4px;color:var(--primary)}
+  @media(max-width:500px){.tip-popup{width:220px;right:auto;left:0}}
+
+
+  /* EXPLANATION PANEL */
+  .exp-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-top:18px;display:none}
+  .exp-panel h3{font-size:15px;margin-bottom:12px;color:var(--primary);display:flex;align-items:center;gap:8px}
+  .exp-steps{display:flex;flex-direction:column;gap:10px}
+  .exp-step{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)}
+  .exp-step .step-num{flex:0 0 26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .exp-step .step-body{font-size:13px;line-height:1.55}
+  .exp-step .step-body strong{display:block;margin-bottom:2px}
+  .exp-step.good{border-color:rgba(67,122,34,.35);background:rgba(67,122,34,.06)}
+  .exp-step.warn{border-color:rgba(184,106,19,.35);background:rgba(184,106,19,.06)}
+  .exp-step.bad{border-color:rgba(158,48,86,.35);background:rgba(158,48,86,.06)}
+  .exp-verdict{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:700;text-align:center}
+  .exp-verdict.green{background:rgba(67,122,34,.1);color:var(--success);border:1px solid rgba(67,122,34,.3)}
+  .exp-verdict.red{background:rgba(158,48,86,.1);color:var(--error);border:1px solid rgba(158,48,86,.3)}
+  .exp-verdict.orange{background:rgba(184,106,19,.1);color:var(--warn);border:1px solid rgba(184,106,19,.3)}
+
+
+  /* CONTACT BAR */
+  .contact-bar{background:var(--primary);color:#fff;padding:10px 20px;border-radius:var(--r);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .contact-bar .contact-info{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .contact-bar .contact-item{display:flex;align-items:center;gap:7px;font-size:13px}
+  .contact-bar .contact-item a{color:#fff;text-decoration:none;font-weight:600}
+  .contact-bar .contact-item a:hover{text-decoration:underline}
+  .contact-bar .contact-icon{font-size:15px}
+  .disclaimer-bar{background:rgba(184,106,19,.1);border:1px solid rgba(184,106,19,.3);border-radius:12px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--warn);line-height:1.55}
+  .disclaimer-bar .disc-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+
+
+  
+
+
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* Hide non-essential elements */
+    .header-actions, .btn, .embed-card, .tip-btn, .tip-popup,
+    .toggles label input[type=checkbox] ~ span::after,
+    #printBtn, #resetBtn, #themeBtn { display: none !important; }
+
+    /* Page setup */
+    @page { margin: 1.8cm 1.5cm; size: A4 portrait; }
+    body { background: #fff !important; color: #1e1c18 !important; font-size: 11px !important; font-family: Arial, sans-serif !important; }
+
+    .wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+
+    /* Contact bar - keep colored */
+    .contact-bar {
+      background: #0e6b71 !important;
+      color: #fff !important;
+      padding: 8px 14px !important;
+      border-radius: 8px !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      margin-bottom: 8px !important;
+    }
+    .contact-bar a { color: #fff !important; }
+    .contact-bar .contact-info { display: flex !important; gap: 16px !important; flex-wrap: wrap !important; }
+    .contact-bar .contact-item { font-size: 11px !important; }
+
+    /* Disclaimer */
+    .disclaimer-bar {
+      background: #fff8e6 !important;
+      border: 1px solid #e8b84b !important;
+      border-radius: 6px !important;
+      padding: 7px 12px !important;
+      font-size: 10px !important;
+      margin-bottom: 10px !important;
+    }
+
+    /* Header logo area */
+    .header {
+      border: 1px solid #ddd !important;
+      border-radius: 8px !important;
+      padding: 8px 14px !important;
+      margin-bottom: 8px !important;
+      box-shadow: none !important;
+    }
+
+    /* MAIN: stack vertically for print */
+    .main {
+      display: block !important;
+      width: 100% !important;
+    }
+
+    /* Input card + Result card side by side using table layout */
+    .card, .result-card {
+      display: block !important;
+      width: 100% !important;
+      box-shadow: none !important;
+      border: 1px solid #ddd !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      margin-bottom: 8px !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+
+    /* Fields: 3 columns for print */
+    .fields {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr 1fr !important;
+      gap: 6px !important;
+    }
+    .field.full { grid-column: 1 / -1 !important; }
+    .field label { font-size: 10px !important; font-weight: 700 !important; display: block !important; margin-bottom: 2px !important; }
+    .field .help { font-size: 9px !important; color: #888 !important; }
+    input, select {
+      border: 1px solid #ccc !important;
+      background: #fafafa !important;
+      padding: 4px 6px !important;
+      font-size: 11px !important;
+      border-radius: 4px !important;
+      width: 100% !important;
+    }
+
+    /* Toggles: 2 columns */
+    .toggles {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 5px !important;
+    }
+    .toggle-item {
+      border: 1px solid #ddd !important;
+      border-radius: 6px !important;
+      padding: 5px 7px !important;
+      font-size: 10px !important;
+      min-height: auto !important;
+    }
+    .toggle-item strong { font-size: 10px !important; }
+
+    /* KPIs: 4 in a row */
+    .kpis {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr 1fr 1fr !important;
+      gap: 6px !important;
+    }
+    .kpi {
+      background: #f5f5f5 !important;
+      border: 1px solid #ddd !important;
+      border-radius: 6px !important;
+      padding: 8px !important;
+    }
+    .kpi .label { font-size: 9px !important; color: #666 !important; }
+    .kpi .val { font-size: 16px !important; font-weight: 800 !important; margin-top: 3px !important; }
+
+    .summary-box .line {
+      border: 1px dashed #ccc !important;
+      border-radius: 6px !important;
+      padding: 5px 8px !important;
+      font-size: 10px !important;
+      margin-bottom: 4px !important;
+    }
+    .note { font-size: 9px !important; color: #888 !important; padding: 6px 8px !important; }
+
+    /* Detail table */
+    .table-wrap {
+      box-shadow: none !important;
+      border: 1px solid #ddd !important;
+      border-radius: 8px !important;
+      margin-bottom: 8px !important;
+      break-inside: avoid !important;
+    }
+    .table-wrap h3 { font-size: 12px !important; padding: 8px 12px !important; background: #f5f5f5 !important; }
+    table { width: 100% !important; border-collapse: collapse !important; }
+    th, td { padding: 5px 10px !important; font-size: 10px !important; border-bottom: 1px solid #eee !important; }
+    th { background: #f5f5f5 !important; font-weight: 700 !important; color: #555 !important; font-size: 9px !important; }
+    .highlight td { background: #e8f5e9 !important; font-weight: 700 !important; }
+    .highlight td:last-child { color: #2e7d32 !important; }
+
+    /* Explanation panel */
+    .exp-panel {
+      display: block !important;
+      box-shadow: none !important;
+      border: 1px solid #ddd !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      margin-bottom: 8px !important;
+      break-inside: avoid !important;
+    }
+    .exp-panel h3 { font-size: 12px !important; margin-bottom: 8px !important; color: #0e6b71 !important; }
+    .exp-steps { display: flex !important; flex-direction: column !important; gap: 5px !important; }
+    .exp-step {
+      display: flex !important;
+      gap: 8px !important;
+      padding: 6px 8px !important;
+      border-radius: 6px !important;
+      border: 1px solid #eee !important;
+      background: #fafafa !important;
+      break-inside: avoid !important;
+    }
+    .exp-step.good { background: #f1f8e9 !important; border-color: #c5e1a5 !important; }
+    .exp-step.warn { background: #fff8e6 !important; border-color: #ffe082 !important; }
+    .exp-step.bad  { background: #fce4ec !important; border-color: #f48fb1 !important; }
+    .exp-step .step-num {
+      flex: 0 0 20px !important; height: 20px !important;
+      border-radius: 50% !important;
+      background: #0e6b71 !important; color: #fff !important;
+      font-size: 9px !important; font-weight: 700 !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+    }
+    .exp-step .step-body { font-size: 10px !important; line-height: 1.4 !important; }
+    .exp-step .step-body strong { font-size: 10px !important; display: block !important; margin-bottom: 1px !important; }
+    .exp-verdict {
+      margin-top: 8px !important;
+      padding: 8px 12px !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      text-align: center !important;
+    }
+    .exp-verdict.green { background: #e8f5e9 !important; color: #2e7d32 !important; border: 1px solid #a5d6a7 !important; }
+    .exp-verdict.red   { background: #fce4ec !important; color: #880e4f !important; border: 1px solid #f48fb1 !important; }
+    .exp-verdict.orange{ background: #fff8e6 !important; color: #e65100 !important; border: 1px solid #ffcc80 !important; }
+
+    /* Law tables */
+    .law-tables { display: block !important; margin-bottom: 8px !important; }
+    .law-card {
+      display: block !important;
+      box-shadow: none !important;
+      border: 1px solid #ddd !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      margin-bottom: 8px !important;
+      break-inside: avoid !important;
+    }
+    .law-card h3 { font-size: 12px !important; color: #0e6b71 !important; margin-bottom: 6px !important; }
+    .law-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    .law-table th { background: #f5f5f5 !important; font-size: 9px !important; padding: 4px 8px !important; }
+    .law-table td { font-size: 10px !important; padding: 4px 8px !important; }
+    .law-table tr.active-row td { background: #e3f2fd !important; color: #0d47a1 !important; font-weight: 700 !important; }
+    .law-note { font-size: 9px !important; color: #888 !important; margin-bottom: 5px !important; }
+
+    .footer { display: block !important; text-align: center !important; font-size: 9px !important; color: #aaa !important; margin-top: 8px !important; padding: 6px !important; border-top: 1px solid #eee !important; }
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">
+      <img src="https://www.cpa-yaniv.co.il/media/1598/logo.png" 
+           alt="יניב כהן רואה חשבון" 
+           height="52" 
+           style="max-height:52px;width:auto;object-fit:contain"
+           loading="eager"/>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="themeBtn">מצב כהה 🌙</button>
+      <button class="btn btn-ghost" id="printBtn">הדפסה / PDF 🖨️</button>
+      <button class="btn btn-ghost" id="resetBtn">איפוס 🔄</button>
+    </div>
+  </header>
+
+
+  <!-- CONTACT BAR -->
+  <div class="contact-bar">
+    <div class="contact-info">
+      <div class="contact-item">
+        <span class="contact-icon">📞</span>
+        <span>משרד: <a href="tel:0747045405">074-7045405</a></span>
+      </div>
+      <div class="contact-item">
+        <span class="contact-icon">📱</span>
+        <span>נייד: <a href="tel:0522620323">052-2620323</a></span>
+      </div>
+      <div class="contact-item">
+        <span class="contact-icon">✉️</span>
+        <a href="mailto:YANIVC8@GMAIL.COM">YANIVC8@GMAIL.COM</a>
+      </div>
+      <div class="contact-item">
+        <span class="contact-icon">🌐</span>
+        <a href="https://www.cpa-yaniv.co.il" target="_blank" rel="noopener">cpa-yaniv.co.il</a>
+      </div>
+    </div>
+    <div style="font-size:12px;opacity:.85">סימולטור פיצוי לעסקים | שאגת הארי 2026</div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer-bar">
+    <span class="disc-icon">💡</span>
+    <span>הסימולטור מספק הערכה ראשונית בלבד. לבירורים ולסיוע בהגשת התביעה — שמחים לעמוד לרשותכם. <strong>יניב כהן רואה חשבון</strong> · <a href="tel:0747045405" style="color:var(--warn);font-weight:600">074-7045405</a> · <a href="mailto:YANIVC8@GMAIL.COM" style="color:var(--warn);font-weight:600">YANIVC8@GMAIL.COM</a></span>
+  </div>
+
+  <div class="main">
+    <!-- LEFT: INPUT FORM -->
+    <div class="card">
+      <h2>נתוני הלקוח</h2>
+      <div class="fields">
+
+        <div class="field">
+          <label for="clientName">שם לקוח</label>
+          <input id="clientName" placeholder="לדוגמה: א.ב. ייעוץ בע״מ"/>
+        </div>
+
+        <div class="field">
+          <label for="entityType"><span class="field-label-row">סוג עוסק<button type="button" class="tip-btn" onclick="toggleTip('entityType')" aria-label="מידע על סוג עוסק">?</button><div class="tip-popup" id="tip-entityType"><strong>סוג עוסק</strong>עוסק רגיל: תקופת זכאות מרץ–אפריל 2026.<br>בסיס מזומן: תקופת זכאות מאי–יוני 2026 (קיבל תקבולים בחודש עוקב).<br>קבלן ביצוע: מקדם הוצאות מוכפל ×0.68.</div></span></label>
+          <select id="entityType">
+            <option value="regular">עוסק מורשה / חברה בע״מ</option>
+            <option value="cash">עוסק מדווח על בסיס מזומן</option>
+            <option value="contractor">קבלן ביצוע</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="track"><span class="field-label-row">מסלול חישוב<button type="button" class="tip-btn" onclick="toggleTip('track')" aria-label="מידע על מסלול חישוב">?</button><div class="tip-popup" id="tip-track"><strong>מסלול חישוב</strong>עסק עם מחזור שנתי מעל 300,000 ₪ — מסלול הוצאות מזכות (תשומות + שכר).<br>עסק עם מחזור 12,000–300,000 ₪ — מסלול סכום קבוע לפי מדרגה.</div></span></label>
+          <select id="track">
+            <option value="large">עסק מעל 300,000 ₪</option>
+            <option value="small">עסק קטן 12,000–300,000 ₪</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="specialType"><span class="field-label-row">סיווג<button type="button" class="tip-btn" onclick="toggleTip('specialType')" aria-label="מידע על עוסק מיוחד">?</button><div class="tip-popup" id="tip-specialType"><strong>עוסק מיוחד</strong>עוסק מיוחד = עוסק שעסקו נמצא באזור שפונה מרץ–יוני 2025, או מי שאירח תושבים מפונים. עבורו שנת הבסיס היא 2022 ותקופת הבסיס — מרץ–אפריל 2023.</div></span></label>
+          <select id="specialType">
+            <option value="regular">עוסק רגיל</option>
+            <option value="special">עוסק מיוחד (ספר/מפונים)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="annualTurnover"><span class="field-label-row">מחזור שנת הבסיס (₪)<button type="button" class="tip-btn" onclick="toggleTip('annualTurnover')" aria-label="מידע על מחזור שנת הבסיס">?</button><div class="tip-popup" id="tip-annualTurnover"><strong>מחזור שנת הבסיס</strong>סה"כ מחזור עסקאות ב-2025 (עוסק רגיל) או ב-2022 (עוסק מיוחד).<br>מחושב: מחזור מדווח ÷ חודשי פעילות × 12.<br>משמש לקביעת: מסלול, תקרת פיצוי, מדרגת סכום קבוע.</div></span></label>
+          <input id="annualTurnover" type="number" min="0" value="600000"/>
+          <div class="help">סה"כ 12 חודשי 2025 (עוסק מיוחד – 2022)</div>
+        </div>
+
+        <div class="field">
+          <label for="baseTurnover"><span class="field-label-row">מחזור תקופת הבסיס (₪)<button type="button" class="tip-btn" onclick="toggleTip('baseTurnover')" aria-label="מידע על מחזור תקופת הבסיס">?</button><div class="tip-popup" id="tip-baseTurnover"><strong>מחזור תקופת הבסיס</strong>מחזור עסקאות בחודשים מרץ–אפריל 2025 (עוסק רגיל).<br>עוסק מיוחד: מרץ–אפריל 2023.<br>משמש לחישוב שיעור הירידה: (בסיס − זכאות) ÷ בסיס.</div></span></label>
+          <input id="baseTurnover" type="number" min="0" value="100000"/>
+          <div class="help">מרץ–אפריל 2025 (עוסק מיוחד – 2023)</div>
+        </div>
+
+        <div class="field">
+          <label for="eligTurnover"><span class="field-label-row">מחזור תקופת הזכאות (₪)<button type="button" class="tip-btn" onclick="toggleTip('eligTurnover')" aria-label="מידע על מחזור תקופת הזכאות">?</button><div class="tip-popup" id="tip-eligTurnover"><strong>מחזור תקופת הזכאות</strong>מחזור עסקאות בחודשים מרץ–אפריל 2026 (עוסק רגיל).<br>בסיס מזומן / קבלן ביצוע: מאי–יוני 2026.<br>זהו המחזור שנפגע עקב הלחימה.</div></span></label>
+          <input id="eligTurnover" type="number" min="0" value="50000"/>
+          <div class="help">מרץ–אפריל 2026 | בסיס מזומן/קבלן – מאי–יוני 2026</div>
+        </div>
+
+        <!-- LARGE TRACK FIELDS -->
+        <div class="field" id="f-inputs">
+          <label for="annualInputs"><span class="field-label-row">תשומות שוטפות בשנה הקודמת (₪)<button type="button" class="tip-btn" onclick="toggleTip('annualInputs')" aria-label="מידע על תשומות שוטפות שנה קודמת">?</button><div class="tip-popup" id="tip-annualInputs"><strong>תשומות שוטפות שנה קודמת</strong>סה"כ מע"מ תשומות שוטפות שדווחו לגבי 2025 (ללא תשומות ציוד ורכש מקרובים).<br>מחולק ב-6 ומוכפל במקדם הוצאות קבועות.<br>משמש לקביעת רכיב ההוצאות הקבועות בפיצוי.</div></span></label>
+          <input id="annualInputs" type="number" min="0" value="120000"/>
+          <div class="help">סה"כ תשומות מע"מ מדווחות בשנה הקודמת</div>
+        </div>
+
+        <div class="field" id="f-employees">
+          <label for="employees"><span class="field-label-row">מספר עובדים מזכים<button type="button" class="tip-btn" onclick="toggleTip('employees')" aria-label="מידע על עובדים מזכים">?</button><div class="tip-popup" id="tip-employees"><strong>עובדים מזכים</strong>עובד מזכה = עובד שהמעסיק הצהיר שלא הופסקה העסקתו במהלך מרץ–אפריל 2026.<br>משמש לחישוב חלופת שכר ב' (שכר ממוצע × עובדים × 1.25).</div></span></label>
+          <input id="employees" type="number" min="0" value="2"/>
+        </div>
+
+        <div class="field" id="f-wage">
+          <label for="wagePaid"><span class="field-label-row">שכר לעובדים מזכים מרץ–אפריל 2026 (₪)<button type="button" class="tip-btn" onclick="toggleTip('wagePaid')" aria-label="מידע על שכר ששולם לעובדים מזכים">?</button><div class="tip-popup" id="tip-wagePaid"><strong>שכר ששולם לעובדים מזכים</strong>שכר עבודה ששולם לעובדים מזכים בחודשים מרץ–אפריל 2026 לפי טופס 102.<br>לא כולל: החזר מילואים מהביטוח הלאומי + ימי חופשה שנוצלו.</div></span></label>
+          <input id="wagePaid" type="number" min="0" value="40000"/>
+        </div>
+
+        <div class="field" id="f-avgwage">
+          <label for="avgWage"><span class="field-label-row">שכר ממוצע חודשי מרץ 2026 (₪)<button type="button" class="tip-btn" onclick="toggleTip('avgWage')" aria-label="מידע על שכר ממוצע במשק">?</button><div class="tip-popup" id="tip-avgWage"><strong>שכר ממוצע במשק</strong>השכר הממוצע לפי סעיף 2(ב) לחוק הביטוח הלאומי כפי שהיה ידוע במרץ 2026.<br>ברירת מחדל: 13,769 ₪.<br>משמש לחישוב תקרת רכיב השכר המזכה.</div></span></label>
+          <input id="avgWage" type="number" min="0" value="13769"/>
+          <div class="help">סעיף 2(ב) לחוק ביטוח לאומי. ברירת מחדל: 13,769 ₪</div>
+        </div>
+
+        <div class="field" id="f-customfactor">
+          <label for="customFactor"><span class="field-label-row">מקדם הוצאות קבועות ידני (%)<button type="button" class="tip-btn" onclick="toggleTip('customFactor')" aria-label="מידע על מקדם ידני">?</button><div class="tip-popup" id="tip-customFactor"><strong>מקדם ידני</strong>בדרך כלל המקדם נקבע אוטומטית לפי שיעור הירידה.<br>ניתן לציין מקדם שונה רק אם המנהל אישר זאת במפורש (עד פי 2 מהמקדם הרגיל).</div></span></label>
+          <input id="customFactor" type="number" min="0" step="0.01" placeholder="ריק = אוטומטי לפי חוק"/>
+          <div class="help">רק אם המנהל אישר מקדם שונה</div>
+        </div>
+
+        <div class="field full">
+          <label>תנאי סף</label>
+          <div class="toggles">
+            <label class="toggle-item"><input type="checkbox" id="chkOpened" checked/><span><strong>נפתח לפני 1.3.2026</strong>הודיע לרשות המסים עד 28.2.2026</span></label>
+            <label class="toggle-item"><input type="checkbox" id="chkCausal" checked/><span><strong>ירידה מנזק עקיף</strong>קשר סיבתי למצב הלחימה</span></label>
+            <label class="toggle-item"><input type="checkbox" id="chkBooks" checked/><span><strong>פנקסים קבילים</strong>ללא אי-ניהול ספרים סופי</span></label>
+            <label class="toggle-item"><input type="checkbox" id="chkActive" checked/><span><strong>עסק פעיל</strong>לא דווח סגירה / לא מחזור אפס</span></label>
+          </div>
+        </div>
+
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button class="btn btn-primary" id="calcBtn">⟳ חשב פיצוי</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: RESULTS -->
+    <div class="result-card">
+      <h2 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">תוצאה <span id="trackBadge" class="badge" style="font-size:12px">-</span></h2>
+      <div class="kpis">
+        <div class="kpi"><div class="label">שיעור ירידה</div><div class="val" id="rDrop">-</div></div>
+        <div class="kpi"><div class="label">זכאות</div><div class="val" id="rElig">-</div></div>
+        <div class="kpi"><div class="label">תקופת זכאות</div><div class="val" id="rPeriod" style="font-size:16px;margin-top:8px">-</div></div>
+        <div class="kpi"><div class="label">אומדן פיצוי</div><div class="val green" id="rComp">-</div></div>
+      </div>
+      <div class="summary-box" id="summaryBox"></div>
+      <div class="note" id="noteBox">הסימולטור מציג אומדן בלבד. במקרים מיוחדים (שינוי דיווח, תקופה חליפית, נזק ישיר, מקדם אחר) יש לבצע בדיקה מעמיקה לפני הגשה.</div>
+    </div>
+  </div>
+
+  <!-- DETAILS TABLE -->
+  <div class="table-wrap">
+    <h3 id="tableTitle">פירוט חישוב</h3>
+    <table>
+      <thead><tr><th>רכיב</th><th>הסבר</th><th>ערך</th></tr></thead>
+      <tbody id="detailBody"></tbody>
+    </table>
+  </div>
+
+
+
+  <!-- EXPLANATION PANEL -->
+  <div class="exp-panel" id="expPanel">
+    <h3>💡 הסבר על תוצאת החישוב</h3>
+    <div class="exp-steps" id="expSteps"></div>
+    <div class="exp-verdict" id="expVerdict"></div>
+  </div>
+
+  <!-- LAW TABLES -->
+  <div class="law-tables" id="lawTables" style="display:none">
+
+    <!-- SMALL TRACK TABLE -->
+    <div id="lawSmall" style="display:none" class="law-card">
+      <h3>📋 טבלת פיצוי — מסלול עסקים קטנים (סעיף 38לז(ב))</h3>
+      <p class="law-note">הפיצוי = סכום יסוד × מקדם נזק (אם רלוונטי) × 2</p>
+      <div class="law-grid">
+        <div>
+          <table class="law-table">
+            <thead><tr><th>מחזור שנת הבסיס</th><th>סכום יסוד</th><th>מקדם נזק?</th></tr></thead>
+            <tbody>
+              <tr><td>עד 50,000 ₪</td><td><strong>1,864 ₪</strong></td><td>לא — × 2 בלבד</td></tr>
+              <tr><td>50,001 – 90,000 ₪</td><td><strong>3,356 ₪</strong></td><td>לא — × 2 בלבד</td></tr>
+              <tr><td>90,001 – 120,000 ₪</td><td><strong>4,475 ₪</strong></td><td>לא — × 2 בלבד</td></tr>
+              <tr id="lawSmallRow4"><td>120,001 – 150,000 ₪</td><td><strong>2,823 ₪</strong></td><td>כן × מקדם × 2</td></tr>
+              <tr id="lawSmallRow5"><td>150,001 – 200,000 ₪</td><td><strong>3,329 ₪</strong></td><td>כן × מקדם × 2</td></tr>
+              <tr id="lawSmallRow6"><td>200,001 – 250,000 ₪</td><td><strong>4,261 ₪</strong></td><td>כן × מקדם × 2</td></tr>
+              <tr id="lawSmallRow7"><td>250,001 – 300,000 ₪</td><td><strong>4,980 ₪</strong></td><td>כן × מקדם × 2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <table class="law-table">
+            <thead><tr><th>שיעור ירידה</th><th>מקדם נזק</th></tr></thead>
+            <tbody>
+              <tr><td>25% – 40%</td><td><strong>× 1</strong></td></tr>
+              <tr><td>40% – 60%</td><td><strong>× 1.5</strong></td></tr>
+              <tr><td>60% – 80%</td><td><strong>× 2.4</strong></td></tr>
+              <tr><td>מעל 80%</td><td><strong>× 3</strong></td></tr>
+            </tbody>
+          </table>
+          <div class="law-note" style="margin-top:10px">⚠️ סעיף 38לז(ג): לעסקים מעל 300,000 ₪ — הפיצוי לא יפחת מהמדרגה הגבוהה ביותר (4,980 × מקדם × 2)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LARGE TRACK TABLE -->
+    <div id="lawLarge" style="display:none" class="law-card">
+      <h3>📋 טבלת פיצוי — מסלול הוצאות מזכות (סעיף 38לז(א))</h3>
+      <p class="law-note">הפיצוי = הוצאות קבועות + חלק שכר מזכה, עד תקרה</p>
+      <div class="law-grid">
+        <div>
+          <table class="law-table">
+            <thead><tr><th>שיעור ירידה</th><th>מקדם הוצ' קבועות</th><th>עסק רגיל</th><th>קבלן ביצוע</th></tr></thead>
+            <tbody>
+              <tr><td>25% – 40%</td><td>7%</td><td>7%</td><td>4.76%</td></tr>
+              <tr><td>40% – 60%</td><td>11%</td><td>11%</td><td>7.48%</td></tr>
+              <tr><td>60% – 80%</td><td>15%</td><td>15%</td><td>10.2%</td></tr>
+              <tr><td>מעל 80%</td><td>22%</td><td>22%</td><td>14.96%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <table class="law-table">
+            <thead><tr><th>מחזור שנתי</th><th>תקרת הוצאות מזכות (× 2)</th></tr></thead>
+            <tbody>
+              <tr><td>עד 100 מיליון ₪</td><td><strong>1,200,000 ₪</strong></td></tr>
+              <tr><td>100–300 מיליון ₪</td><td><strong>600,000 + 0.3% מהעודף × 2</strong></td></tr>
+              <tr><td>300–400 מיליון ₪</td><td><strong>2,400,000 ₪</strong></td></tr>
+            </tbody>
+          </table>
+          <div class="law-note" style="margin-top:10px">נוסחת שכר מזכה: MIN(75% × שכר × 1.25 , שכר ממוצע × עובדים × 1.25) × שיעור ירידה</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMBED -->
+  <div class="embed-card">
+    <h3>🔗 שתילה באתר</h3>
+    <div class="embed-code" id="embedCode">&lt;iframe src="https://www.cpa-yaniv.co.il/simulator/yaniv-cohen-simulator.html" width="100%" height="1500" style="border:0;border-radius:14px" loading="lazy"&gt;&lt;/iframe&gt;</div>
+    <div class="embed-actions">
+      <button class="btn btn-primary" id="copyEmbed">העתק קוד הטמעה</button>
+    </div>
+  </div>
+
+  <div class="footer">© יניב כהן רואה חשבון · סימולטור פיצוי לעסקים לפי חוק התוכנית לסיוע כלכלי (הוראת שעה) התשפ"ו–2026</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => isFinite(n) ? new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:0}).format(n) : '—';
+const pct = n => isFinite(n) ? n.toFixed(1)+'%' : '—';
+
+function getEligPeriod(entityType) {
+  return entityType === 'regular' ? 'מרץ–אפריל 2026' : 'מאי–יוני 2026';
+}
+
+function getFactorRate(dropPct, entityType, customPct) {
+  if (customPct > 0) return customPct / 100;
+  let base = 0;
+  if      (dropPct > 80) base = 0.22;
+  else if (dropPct > 60) base = 0.15;
+  else if (dropPct > 40) base = 0.11;
+  else if (dropPct > 25) base = 0.07;
+  if (entityType === 'contractor') return base * 0.68;
+  return base;
+}
+
+function largeCap(annual) {
+  if (annual <= 100_000_000)  return 600_000 * 2;
+  if (annual <= 300_000_000)  return (600_000 + (annual - 100_000_000) * 0.003) * 2;
+  if (annual <= 400_000_000)  return 1_200_000 * 2;
+  return 0;
+}
+
+function smallBase(annual) {
+  if (annual <= 50_000)  return 1864;
+  if (annual <= 90_000)  return 3356;
+  if (annual <= 120_000) return 4475;
+  if (annual <= 150_000) return 2823;
+  if (annual <= 200_000) return 3329;
+  if (annual <= 250_000) return 4261;
+  if (annual <= 300_000) return 4980;
+  return 0;
+}
+
+function smallDamageFactor(dropPct) {
+  if (dropPct > 80) return 3;
+  if (dropPct > 60) return 2.4;
+  if (dropPct > 40) return 1.5;
+  if (dropPct > 25) return 1;
+  return 0;
+}
+
+function row(label, note, val, highlight) {
+  return `<tr${highlight?' class="highlight"':''}><td>${label}</td><td style="color:var(--muted);font-size:13px">${note}</td><td><strong>${val}</strong></td></tr>`;
+}
+
+function calculate() {
+  const track       = $('track').value;
+  const entityType  = $('entityType').value;
+  const annual      = parseFloat($('annualTurnover').value) || 0;
+  const baseTurn    = parseFloat($('baseTurnover').value) || 0;
+  const eligTurn    = parseFloat($('eligTurnover').value) || 0;
+  const annualInp   = parseFloat($('annualInputs').value) || 0;
+  const employees   = parseFloat($('employees').value) || 0;
+  const wagePaid    = parseFloat($('wagePaid').value) || 0;
+  const avgWage     = parseFloat($('avgWage').value) || 0;
+  const customPct   = parseFloat($('customFactor').value) || 0;
+  const chkOpened   = $('chkOpened').checked;
+  const chkCausal   = $('chkCausal').checked;
+  const chkBooks    = $('chkBooks').checked;
+  const chkActive   = $('chkActive').checked;
+
+  const dropPct = baseTurn > 0 ? ((baseTurn - eligTurn) / baseTurn) * 100 : 0;
+  const period  = getEligPeriod(entityType);
+
+  // eligibility checks
+  let eligible = true;
+  const reasons = [];
+  if (!chkOpened)  { eligible = false; reasons.push('לא עמד בתנאי פתיחה/דיווח'); }
+  if (!chkCausal)  { eligible = false; reasons.push('לא סומן קשר סיבתי'); }
+  if (!chkBooks)   { eligible = false; reasons.push('ספרים/פנקסים בעייתיים'); }
+  if (!chkActive)  { eligible = false; reasons.push('עסק לא פעיל לפי תנאי החוק'); }
+  if (dropPct <= 25) { eligible = false; reasons.push('ירידה ≤ 25% (אינה עולה על הסף)'); }
+
+  let comp = 0;
+  let rows = '';
+
+  rows += row('תקופת זכאות', 'נקבעת לפי סוג הדיווח', period);
+  rows += row('מחזור תקופת בסיס', 'לפי התקופה המקבילה', fmt(baseTurn));
+  rows += row('מחזור תקופת זכאות', 'התקופה הנפגעת', fmt(eligTurn));
+  rows += row('שיעור ירידה', '((בסיס − זכאות) ÷ בסיס)', pct(dropPct));
+
+  if (track === 'large') {
+    // -- LARGE TRACK --
+    if (annual <= 300_000 || annual > 400_000_000) {
+      eligible = false;
+      reasons.push('מחזור שנת הבסיס חייב להיות 300,001–400 מיליון ₪ במסלול זה');
+    }
+
+    const factor        = getFactorRate(dropPct, entityType, customPct);
+    const fixedExpenses = (annualInp / 6) * factor;
+    const wageA         = 0.75 * wagePaid * 1.25;
+    const wageB         = avgWage * employees * 1.25;
+    const wageBase      = Math.min(wageA, wageB);
+    const wageEligible  = wageBase * (Math.max(dropPct, 0) / 100);
+    const uncapped      = fixedExpenses + wageEligible;
+    const cap           = largeCap(annual);
+    comp = Math.min(uncapped, cap);
+
+    // סעיף 38לז(ג) — בדיקת מינימום לפי מדרגה (ב)(7) של עסק קטן
+    const minComp = smallDamageFactor(dropPct) > 0 ? 4980 * smallDamageFactor(dropPct) * 2 : 0;
+    const usedMin = eligible && comp < minComp && minComp > 0;
+    if (usedMin) comp = minComp;
+
+    rows += row('מחזור שנת הבסיס', 'לקביעת תקרת הפיצוי', fmt(annual));
+    rows += row('תשומות שוטפות / 6', 'בסיס לחישוב הוצאות קבועות', fmt(annualInp / 6));
+    rows += row('מקדם הוצאות קבועות', 'לפי מדרגת הירידה וסוג העסק', pct(factor * 100));
+    rows += row('הוצאות קבועות', '(תשומות ÷ 6) × מקדם', fmt(fixedExpenses));
+    rows += row('חלופת שכר א׳', '75% × שכר מזכה × 1.25', fmt(wageA));
+    rows += row('חלופת שכר ב׳', 'שכר ממוצע × עובדים × 1.25', fmt(wageB));
+    rows += row('הוצאות שכר בסיס', 'הנמוך מבין א׳ ו-ב׳', fmt(wageBase));
+    rows += row('חלק השכר המזכה', 'הוצאות שכר × שיעור ירידה', fmt(wageEligible));
+    rows += row('סכום לפני תקרה', 'הוצאות קבועות + שכר מזכה', fmt(uncapped));
+    rows += row('תקרת הוצאות מזכות', 'לפי מחזור שנת הבסיס × 2', fmt(cap));
+    rows += row('אומדן פיצוי סופי', 'המינימום בין הסכום לתקרה', fmt(Math.min(uncapped,cap)));
+    const minComp2 = smallDamageFactor(dropPct) > 0 ? 4980 * smallDamageFactor(dropPct) * 2 : 0;
+    const usedMin2 = eligible && Math.min(uncapped,cap) < minComp2 && minComp2 > 0;
+    if (usedMin2) {
+      rows += row('סכום מינימום (סעיף 38לז(ג))', '4,980 × מקדם נזק × 2 — הוראת הרצפה לעסקים גדולים', fmt(minComp2));
+      rows += row('פיצוי סופי (לפי מינימום)', 'הופעל מינימום חוקי', fmt(minComp2), true);
+    } else {
+      rows += row('פיצוי סופי', 'לא הופעל מינימום (הסכום גבוה ממנו)', fmt(Math.min(uncapped,cap)), true);
+    }
+
+    $('tableTitle').textContent = 'פירוט חישוב — מסלול הוצאות מזכות (מעל 300,000 ₪)';
+    $('trackBadge').textContent = 'הוצאות מזכות';
+
+  } else {
+    // -- SMALL TRACK --
+    if (annual <= 12_000 || annual > 300_000) {
+      eligible = false;
+      reasons.push('מחזור שנת הבסיס חייב להיות 12,001–300,000 ₪ במסלול זה');
+    }
+
+    const base        = smallBase(annual);
+    const dmgFactor   = smallDamageFactor(dropPct);
+    const needsFactor = annual > 120_000;
+    comp = needsFactor ? base * dmgFactor * 2 : base * 2;
+
+    rows += row('מחזור שנת הבסיס', 'לקביעת מדרגת הסכום הקבוע', fmt(annual));
+    rows += row('סכום יסוד', 'לפי מדרגת המחזור בחוק', fmt(base));
+    if (needsFactor) {
+      rows += row('מקדם נזק', 'לפי שיעור הירידה (נדרש מעל 120,000 ₪)', dmgFactor.toString());
+      rows += row('חישוב', 'סכום יסוד × מקדם נזק × 2', fmt(comp), true);
+    } else {
+      rows += row('חישוב', 'סכום יסוד × 2 (ללא מקדם עד 120,000 ₪)', fmt(comp), true);
+    }
+
+    $('tableTitle').textContent = 'פירוט חישוב — מסלול עסקים קטנים (עד 300,000 ₪)';
+    $('trackBadge').textContent = 'עסק קטן';
+  }
+
+  if (!eligible) comp = 0;
+
+  // Update KPIs
+  $('rDrop').textContent   = pct(dropPct);
+  $('rDrop').className     = 'val ' + (dropPct > 25 ? 'green' : 'red');
+  $('rElig').textContent   = eligible ? 'זכאי ✓' : 'לא זכאי ✗';
+  $('rElig').className     = 'val ' + (eligible ? 'green' : 'red');
+  $('rPeriod').textContent = period;
+  $('rComp').textContent   = fmt(comp);
+  $('rComp').className     = 'val ' + (comp > 0 ? 'green' : 'red');
+
+  // Summary
+  const minNote = (track === 'large' && usedMin && eligible)
+    ? `<div class="line" style="border-color:var(--warn);background:rgba(184,106,19,.07)"><strong>⚠️ הופעל מינימום חוקי (סעיף 38לז(ג)):</strong> הפיצוי שחושב (${fmt(Math.min(uncapped,cap))}) היה נמוך מסכום המינימום (${fmt(minComp)}). הפיצוי הועלה למינימום.</div>` : '';
+  $('summaryBox').innerHTML = [
+    `<div class="line"><strong>לקוח:</strong> ${$('clientName').value || '—'}</div>`,
+    `<div class="line"><strong>מסלול:</strong> ${track === 'large' ? 'הוצאות מזכות (מעל 300,000 ₪)' : 'עסק קטן (עד 300,000 ₪)'}</div>`,
+    `<div class="line"><strong>בדיקת סף:</strong> ${eligible ? 'כל תנאי הסף התקיימו ✓' : '⚠️ ' + reasons.join(' | ')}</div>`,
+    minNote
+  ].join('');
+
+  $('detailBody').innerHTML = rows;
+  updateLawTables(track, annual, dropPct);
+
+  // build explanation
+  buildExplanation({
+    track, eligible, reasons, dropPct, annual, baseTurn, eligTurn,
+    annualInp, employees, wagePaid, avgWage,
+    factor: (track==='large') ? getFactorRate(dropPct, entityType, customPct) : 0,
+    fixedExpenses: (track==='large') ? (annualInp/6)*getFactorRate(dropPct,entityType,customPct) : 0,
+    wageA: (track==='large') ? 0.75*wagePaid*1.25 : 0,
+    wageB: (track==='large') ? avgWage*employees*1.25 : 0,
+    wageBase: (track==='large') ? Math.min(0.75*wagePaid*1.25, avgWage*employees*1.25) : 0,
+    wageEligible: (track==='large') ? Math.min(0.75*wagePaid*1.25, avgWage*employees*1.25)*(Math.max(dropPct,0)/100) : 0,
+    uncapped: (track==='large') ? (annualInp/6)*getFactorRate(dropPct,entityType,customPct) + Math.min(0.75*wagePaid*1.25,avgWage*employees*1.25)*(Math.max(dropPct,0)/100) : 0,
+    cap: (track==='large') ? largeCap(annual) : 0,
+    comp,
+    minComp: (track==='large') ? (smallDamageFactor(dropPct)>0 ? 4980*smallDamageFactor(dropPct)*2 : 0) : 0,
+    usedMin: (track==='large') ? usedMin : false,
+    base: (track==='small') ? smallBase(annual) : 0,
+    dmgFactor: (track==='small') ? smallDamageFactor(dropPct) : smallDamageFactor(dropPct),
+    needsFactor: (track==='small') ? annual>120000 : false
+  });
+}
+
+// Events
+$('calcBtn').addEventListener('click', calculate);
+$('resetBtn').addEventListener('click', () => {
+  document.querySelectorAll('input[type=number]').forEach(i => { i.value = ''; });
+  $('clientName').value = '';
+  $('customFactor').value = '';
+  $('track').value = 'large';
+  $('entityType').value = 'regular';
+  $('specialType').value = 'regular';
+  ['chkOpened','chkCausal','chkBooks','chkActive'].forEach(id => $(id).checked = true);
+  calculate();
+});
+$('themeBtn').addEventListener('click', () => {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+  $('themeBtn').textContent = dark ? 'מצב כהה 🌙' : 'מצב בהיר ☀️';
+});
+$('printBtn').addEventListener('click', () => {
+    try {
+      if (window.self !== window.top) {
+        // Inside iframe — open in new tab and print from there
+        const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+        const url = URL.createObjectURL(blob);
+        const win = window.open(url, '_blank');
+        win && win.addEventListener('load', () => { win.print(); });
+      } else {
+        window.print();
+      }
+    } catch(e) {
+      window.print();
+    }
+  });
+$('copyEmbed').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('embedCode').textContent); $('copyEmbed').textContent = 'הועתק! ✓'; setTimeout(() => $('copyEmbed').textContent = 'העתק קוד הטמעה', 2000); }
+  catch { alert('לא ניתן להעתיק אוטומטית.'); }
+});
+
+// Live recalc
+['track','entityType','specialType','annualTurnover','baseTurnover','eligTurnover',
+ 'annualInputs','employees','wagePaid','avgWage','customFactor',
+ 'chkOpened','chkCausal','chkBooks','chkActive'].forEach(id => {
+  const el = $(id);
+  if (el) el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', calculate);
+});
+
+// Show/hide large-track fields based on track selection
+function toggleFields() {
+  const large = $('track').value === 'large';
+  ['f-inputs','f-employees','f-wage','f-avgwage','f-customfactor'].forEach(id => {
+    const el = $(id);
+    if (el) el.style.display = large ? '' : 'none';
+  });
+  calculate();
+}
+$('track').addEventListener('change', toggleFields);
+toggleFields();
+
+
+  function buildExplanation(params) {
+    const { track, eligible, reasons, dropPct, annual, baseTurn, eligTurn,
+            annualInp, employees, wagePaid, avgWage, factor, fixedExpenses,
+            wageA, wageB, wageBase, wageEligible, uncapped, cap, comp,
+            minComp, usedMin, base, dmgFactor, needsFactor } = params;
+
+    const panel = document.getElementById('expPanel');
+    const stepsEl = document.getElementById('expSteps');
+    const verdict = document.getElementById('expVerdict');
+    const fmt2 = n => isFinite(n) && n > 0 ? new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:0}).format(n) : '0 ₪';
+    const pct2 = n => isFinite(n) ? n.toFixed(1)+'%' : '—';
+    panel.style.display = 'block';
+    let steps = [];
+
+    // Step 1: Drop rate
+    const dropClass = dropPct > 25 ? 'good' : 'bad';
+    steps.push({cls: dropClass, title: 'שיעור הירידה במחזור',
+      body: `מחזור בסיס: ${fmt2(baseTurn)} ← מחזור זכאות: ${fmt2(eligTurn)}<br>
+             ירידה של <strong>${pct2(dropPct)}</strong> — ${dropPct > 25 ? '✅ עובר את סף 25% הנדרש' : '❌ לא עובר את סף 25% — לא תקום זכאות'}`
+    });
+
+    // Step 2: Eligibility conditions
+    if (!eligible && reasons.length) {
+      steps.push({cls:'bad', title:'תנאי סף — נכשל',
+        body:'הסיבות: ' + reasons.join(' | ')
+      });
+    } else if (eligible) {
+      steps.push({cls:'good', title:'תנאי סף', body:'✅ כל 4 תנאי הסף התקיימו — ניתן להמשיך לחישוב הפיצוי.'});
+    }
+
+    if (track === 'large') {
+      // Step 3: Fixed expenses
+      steps.push({cls:'', title:'חישוב הוצאות קבועות (סעיף 38לו)',
+        body:`תשומות שנה קודמת ÷ 6 = ${fmt2(annualInp/6)}<br>
+              × מקדם ${pct2(factor*100)} (לפי ירידה של ${pct2(dropPct)}) = <strong>${fmt2(fixedExpenses)}</strong>`
+      });
+      // Step 4: Wage
+      steps.push({cls:'', title:'חישוב חלק השכר המזכה',
+        body:`חלופה א׳: 75% × ${fmt2(wagePaid)} × 1.25 = ${fmt2(wageA)}<br>
+              חלופה ב׳: ${fmt2(avgWage)} × ${employees} עובדים × 1.25 = ${fmt2(wageB)}<br>
+              <strong>נבחרה הנמוכה: ${fmt2(wageBase)}</strong><br>
+              × שיעור ירידה ${pct2(dropPct)} = חלק שכר מזכה: <strong>${fmt2(wageEligible)}</strong>`
+      });
+      // Step 5: Total before cap
+      steps.push({cls:'', title:'סכום לפני תקרה',
+        body:`הוצאות קבועות ${fmt2(fixedExpenses)} + שכר מזכה ${fmt2(wageEligible)} = <strong>${fmt2(uncapped)}</strong>`
+      });
+      // Step 6: Cap
+      const hitCap = uncapped > cap;
+      steps.push({cls: hitCap ? 'warn' : 'good', title:'בדיקת תקרה (סעיף 38לו — "הוצאות מזכות")',
+        body:`תקרה לפי מחזור ${fmt2(annual)}: <strong>${fmt2(cap)}</strong><br>
+              ${hitCap ? `⚠️ הסכום (${fmt2(uncapped)}) עולה על התקרה — קוצץ ל-${fmt2(cap)}` : `✅ הסכום (${fmt2(uncapped)}) מתחת לתקרה`}`
+      });
+      // Step 7: Minimum
+      if (usedMin) {
+        steps.push({cls:'warn', title:'הופעל מינימום חוקי — סעיף 38לז(ג)',
+          body:`הפיצוי שחושב (${fmt2(Math.min(uncapped,cap))}) נמוך מהמינימום החוקי.<br>
+                מינימום = 4,980 × מקדם נזק ${dmgFactor} × 2 = <strong>${fmt2(minComp)}</strong><br>
+                ⚡ הפיצוי הועלה אוטומטית למינימום.`
+        });
+      }
+    } else {
+      // Small track
+      steps.push({cls:'', title:'קביעת מדרגת הסכום הקבוע (סעיף 38לז(ב))',
+        body:`מחזור שנת הבסיס: ${fmt2(annual)}<br>
+              <strong>סכום יסוד לפי מדרגה: ${fmt2(base)}</strong>`
+      });
+      if (needsFactor) {
+        steps.push({cls:'', title:'מקדם נזק (סעיף 38לז(ה))',
+          body:`שיעור ירידה ${pct2(dropPct)} → מקדם נזק: <strong>× ${dmgFactor}</strong><br>
+                (נדרש רק מעל מחזור 120,000 ₪)`
+        });
+        steps.push({cls:'', title:'חישוב הפיצוי',
+          body:`${fmt2(base)} × ${dmgFactor} × 2 = <strong>${fmt2(comp)}</strong>`
+        });
+      } else {
+        steps.push({cls:'good', title:'חישוב הפיצוי (ללא מקדם נזק)',
+          body:`מחזור עד 120,000 ₪ — אין מקדם נזק.<br>
+                ${fmt2(base)} × 2 = <strong>${fmt2(comp)}</strong>`
+        });
+      }
+    }
+
+    stepsEl.innerHTML = steps.map((s,i) =>
+      `<div class="exp-step ${s.cls}">
+        <div class="step-num">${i+1}</div>
+        <div class="step-body"><strong>${s.title}</strong>${s.body}</div>
+       </div>`
+    ).join('');
+
+    if (!eligible) {
+      verdict.className = 'exp-verdict red';
+      verdict.textContent = '❌ הלקוח אינו זכאי לפיצוי — ראה הסיבות למעלה';
+    } else if (comp === 0) {
+      verdict.className = 'exp-verdict red';
+      verdict.textContent = '❌ הפיצוי המחושב הוא 0 ₪ — בדוק את הנתונים';
+    } else {
+      verdict.className = 'exp-verdict green';
+      verdict.textContent = `✅ אומדן פיצוי: ${fmt2(comp)} ${usedMin ? '(לפי סכום מינימום חוקי)' : ''}`;
+    }
+  }
+
+  // Show law tables after calculation
+  function updateLawTables(track, annual, dropPct) {
+    const lawDiv = document.getElementById('lawTables');
+    const lawSmall = document.getElementById('lawSmall');
+    const lawLarge = document.getElementById('lawLarge');
+    lawDiv.style.display = 'block';
+
+    if (track === 'small') {
+      lawSmall.style.display = 'block';
+      lawLarge.style.display = 'none';
+      // highlight active row
+      const rows = lawSmall.querySelectorAll('tbody tr');
+      rows.forEach(r => r.classList.remove('active-row'));
+      let activeIdx = 0;
+      if (annual <= 50000)       activeIdx = 0;
+      else if (annual <= 90000)  activeIdx = 1;
+      else if (annual <= 120000) activeIdx = 2;
+      else if (annual <= 150000) activeIdx = 3;
+      else if (annual <= 200000) activeIdx = 4;
+      else if (annual <= 250000) activeIdx = 5;
+      else                       activeIdx = 6;
+      if (rows[activeIdx]) rows[activeIdx].classList.add('active-row');
+
+      // highlight damage factor row
+      const dmgRows = lawSmall.querySelectorAll('table:nth-of-type(2) tbody tr');
+      dmgRows.forEach(r => r.classList.remove('active-row'));
+      let dmgIdx = -1;
+      if (dropPct > 80)      dmgIdx = 3;
+      else if (dropPct > 60) dmgIdx = 2;
+      else if (dropPct > 40) dmgIdx = 1;
+      else if (dropPct > 25) dmgIdx = 0;
+      if (dmgIdx >= 0 && dmgRows[dmgIdx]) dmgRows[dmgIdx].classList.add('active-row');
+
+    } else {
+      lawLarge.style.display = 'block';
+      lawSmall.style.display = 'none';
+      // highlight factor row
+      const fRows = lawLarge.querySelectorAll('table:nth-of-type(1) tbody tr');
+      fRows.forEach(r => r.classList.remove('active-row'));
+      let fIdx = -1;
+      if (dropPct > 80)      fIdx = 3;
+      else if (dropPct > 60) fIdx = 2;
+      else if (dropPct > 40) fIdx = 1;
+      else if (dropPct > 25) fIdx = 0;
+      if (fIdx >= 0 && fRows[fIdx]) fRows[fIdx].classList.add('active-row');
+
+      // highlight cap row
+      const cRows = lawLarge.querySelectorAll('table:nth-of-type(2) tbody tr');
+      cRows.forEach(r => r.classList.remove('active-row'));
+      let cIdx = 0;
+      if (annual > 300_000_000)       cIdx = 2;
+      else if (annual > 100_000_000)  cIdx = 1;
+      if (cRows[cIdx]) cRows[cIdx].classList.add('active-row');
+    }
+  }
+
+
+  function toggleTip(id) {
+    document.querySelectorAll('.tip-popup.show').forEach(p => {
+      if (p.id !== 'tip-' + id) p.classList.remove('show');
+    });
+    const p = document.getElementById('tip-' + id);
+    if (p) p.classList.toggle('show');
+  }
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.tip-btn') && !e.target.closest('.tip-popup')) {
+      document.querySelectorAll('.tip-popup.show').forEach(p => p.classList.remove('show'));
+    }
+  });
+
+</script>
+</body>
+</html>
