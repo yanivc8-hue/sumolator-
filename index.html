@@ -1042,5 +1042,344 @@ toggleFields();
   });
 
 </script>
+
+<!-- ===================== AI ASSISTANT ===================== -->
+<style>
+  .ai-fab{position:fixed;bottom:20px;left:20px;z-index:10000;display:flex;align-items:center;gap:8px;background:var(--primary);color:#fff;border:none;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.22);font-family:inherit}
+  .ai-fab:hover{opacity:.92}
+  .ai-fab .ai-fab-ico{font-size:18px;line-height:1}
+  .ai-panel{position:fixed;bottom:80px;left:20px;z-index:10001;width:380px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100dvh - 110px);background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 16px 48px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden}
+  .ai-panel.open{display:flex}
+  .ai-head{background:var(--primary);color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .ai-head strong{font-size:15px}
+  .ai-head small{display:block;font-size:11px;opacity:.85;font-weight:400}
+  .ai-head-btns{display:flex;gap:4px}
+  .ai-icon-btn{background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px}
+  .ai-icon-btn:hover{background:rgba(255,255,255,.28)}
+  .ai-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+  .ai-msg{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}
+  .ai-msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-top-right-radius:4px}
+  .ai-msg.user{align-self:flex-end;background:var(--primary);color:#fff;border-top-left-radius:4px}
+  .ai-msg.bot b{color:var(--primary)}
+  .ai-msg .ai-src{display:block;margin-top:6px;font-size:11px;color:var(--muted)}
+  .ai-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .ai-chip{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+  .ai-chip:hover{border-color:var(--primary);color:var(--primary)}
+  .ai-foot{border-top:1px solid var(--border);padding:10px;display:flex;gap:8px;background:var(--surface)}
+  .ai-foot textarea{flex:1;resize:none;height:42px;max-height:110px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font-size:14px;font-family:inherit}
+  .ai-foot textarea:focus{outline:2px solid var(--primary);outline-offset:1px}
+  .ai-send{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:0 14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .ai-send:disabled{opacity:.5;cursor:default}
+  .ai-settings{display:none;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--surface2);font-size:12px;gap:8px;flex-direction:column}
+  .ai-settings.open{display:flex}
+  .ai-settings input{padding:8px 10px;font-size:13px;direction:ltr;text-align:left}
+  .ai-settings .ai-row{display:flex;gap:6px}
+  .ai-settings .ai-row button{white-space:nowrap}
+  .ai-mode{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.2);margin-inline-start:6px;font-weight:700}
+  .ai-typing{display:inline-flex;gap:3px}
+  .ai-typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:aiDot 1s infinite}
+  .ai-typing i:nth-child(2){animation-delay:.15s}.ai-typing i:nth-child(3){animation-delay:.3s}
+  @keyframes aiDot{0%,80%,100%{opacity:.25}40%{opacity:1}}
+  @media(max-width:500px){.ai-panel{left:16px;right:16px;width:auto;bottom:76px}.ai-fab{left:16px;bottom:16px}}
+  @media print{.ai-fab,.ai-panel{display:none !important}}
+</style>
+
+<button class="ai-fab" id="aiFab" type="button" aria-haspopup="dialog" aria-controls="aiPanel">
+  <span class="ai-fab-ico">✨</span><span>עוזר AI</span>
+</button>
+
+<div class="ai-panel" id="aiPanel" role="dialog" aria-label="עוזר AI">
+  <div class="ai-head">
+    <div><strong>עוזר AI <span class="ai-mode" id="aiMode">מאגר ידע</span></strong><small>שאלו איך לבצע פעולה או איפה למצוא נתון</small></div>
+    <div class="ai-head-btns">
+      <button class="ai-icon-btn" id="aiClear" type="button" title="שיחה חדשה" aria-label="שיחה חדשה">🗑️</button>
+      <button class="ai-icon-btn" id="aiGear" type="button" title="הגדרות" aria-label="הגדרות">⚙️</button>
+      <button class="ai-icon-btn" id="aiClose" type="button" title="סגירה" aria-label="סגירה">✕</button>
+    </div>
+  </div>
+  <div class="ai-settings" id="aiSettings">
+    <div><b>חיבור ל-Claude (אופציונלי)</b> — בלי מפתח, העוזר עונה ממאגר ידע מובנה. עם מפתח API של Anthropic הוא עונה על כל שאלה ומכיר את הנתונים שהוזנו בטופס.</div>
+    <div class="ai-row">
+      <input id="aiKey" type="password" placeholder="sk-ant-..." autocomplete="off"/>
+      <button class="btn btn-primary" id="aiSaveKey" type="button">שמירה</button>
+      <button class="btn btn-ghost" id="aiDelKey" type="button">מחיקה</button>
+    </div>
+    <div style="color:var(--muted)">המפתח נשמר רק בדפדפן הזה (localStorage). מיועד לשימוש פנימי במשרד — אל תזינו מפתח במחשב ציבורי.</div>
+  </div>
+  <div class="ai-body" id="aiBody" aria-live="polite"></div>
+  <div class="ai-foot">
+    <textarea id="aiInput" placeholder="לדוגמה: איפה מוצאים את התשומות השוטפות?" rows="1"></textarea>
+    <button class="ai-send" id="aiSend" type="button">שליחה</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const el = id => document.getElementById(id);
+
+  // ---------- Optional server proxy ----------
+  // If you deploy a proxy that holds the API key server-side, put its URL here.
+  // It should accept the same JSON body as https://api.anthropic.com/v1/messages.
+  const AI_PROXY_URL = '';
+  const AI_MODEL = 'claude-opus-5-5';
+  const KEY_STORE = 'sumolator_ai_key';
+
+  // ---------- Built-in knowledge base ----------
+  const KB = [
+    { k:['תשומות','תשומות שוטפות','מעמ תשומות','874','pcn'],
+      t:'איפה מוצאים תשומות שוטפות?',
+      a:'<b>תשומות שוטפות של 2025</b> נמצאות בדוחות המע"מ התקופתיים (דוח 83 / PCN874) — שורת "תשומות אחרות" בלבד, <b>בלי</b> תשומות ציוד ובלי רכש מקרובים.\nאיפה לחפש: האזור האישי באתר רשות המסים ← מע"מ ← צפייה בדוחות שהוגשו, או בתוכנת הנהלת החשבונות ← דוח מע"מ / כרטסת "מע"מ תשומות".\nסוכמים את כל התקופות של 2025 ומזינים בשדה "תשומות שוטפות בשנה הקודמת". הסימולטור מחלק ב-6 ומכפיל במקדם.' },
+    { k:['מחזור שנתי','מחזור שנת הבסיס','שנת בסיס','2025','2022','מחזור שנה'],
+      t:'איך מחשבים מחזור שנת הבסיס?',
+      a:'<b>מחזור שנת הבסיס</b> = סך מחזור העסקאות שדווח למע"מ בשנת 2025 (עוסק מיוחד: 2022).\nאיפה לחפש: דוחות מע"מ שהוגשו (שורת "עסקאות חייבות" + "עסקאות פטורות/אפס"), או דוח מחזורים בתוכנת הנהלת החשבונות.\nאם העסק לא פעל כל השנה: מחזור מדווח ÷ חודשי פעילות × 12.\nהנתון קובע את המסלול (מעל/מתחת 300,000 ₪), את תקרת הפיצוי ואת המדרגה במסלול הקטן.' },
+    { k:['תקופת בסיס','מחזור בסיס','מרץ אפריל 2025','2023'],
+      t:'מה זה מחזור תקופת הבסיס?',
+      a:'<b>מחזור תקופת הבסיס</b> = מחזור העסקאות בחודשים מרץ–אפריל 2025 (עוסק מיוחד: מרץ–אפריל 2023).\nאיפה לחפש: דוח המע"מ של התקופה (דו-חודשי: דוח 03-04/2025; חודשי: סכום דוחות מרץ + אפריל).' },
+    { k:['תקופת זכאות','מחזור זכאות','2026','מאי יוני','ירידה'],
+      t:'מה זה מחזור תקופת הזכאות?',
+      a:'<b>מחזור תקופת הזכאות</b> = מחזור העסקאות בתקופה שנפגעה:\n• עוסק רגיל: מרץ–אפריל 2026\n• בסיס מזומן / קבלן ביצוע: מאי–יוני 2026\nאיפה לחפש: דוח המע"מ של אותה תקופה.\nשיעור הירידה = (בסיס − זכאות) ÷ בסיס. נדרשת ירידה של יותר מ-25% כדי לזכות בפיצוי.' },
+    { k:['שכר','102','טופס 102','משכורת','שכר ששולם'],
+      t:'איפה מוצאים את השכר לעובדים מזכים?',
+      a:'<b>שכר לעובדים מזכים (מרץ–אפריל 2026)</b> נלקח מ<b>טופס 102</b> של החודשים מרץ ואפריל 2026 (שורת "סה"כ שכר").\nאיפה לחפש: תוכנת השכר / מנהלת החשבונות, או האזור האישי במס הכנסה ← ניכויים ← דיווחי 102.\nיש להפחית: החזרי מילואים מביטוח לאומי + שווי ימי חופשה שנוצלו.' },
+    { k:['עובדים','מספר עובדים','עובד מזכה'],
+      t:'כמה עובדים מזכים יש?',
+      a:'<b>עובד מזכה</b> = עובד שהמעסיק מצהיר שלא הופסקה העסקתו במהלך מרץ–אפריל 2026.\nאיפה לחפש: רשימת העובדים בתוכנת השכר / תלושי מרץ–אפריל 2026, או מספר העובדים בטופס 102.' },
+    { k:['שכר ממוצע','ממוצע במשק','13769','13,769'],
+      t:'מה השכר הממוצע במשק?',
+      a:'<b>שכר ממוצע</b> לפי סעיף 2(ב) לחוק הביטוח הלאומי, כפי שהיה ידוע במרץ 2026. ברירת המחדל בסימולטור: 13,769 ₪.\nאיפה לחפש: אתר הביטוח הלאומי ← "השכר הממוצע במשק".' },
+    { k:['מקדם','מקדם הוצאות','מקדם ידני','22%','15%','11%','7%'],
+      t:'איך נקבע מקדם ההוצאות הקבועות?',
+      a:'<b>מקדם הוצאות קבועות</b> נקבע אוטומטית לפי שיעור הירידה:\n• 25%–40% → 7%\n• 40%–60% → 11%\n• 60%–80% → 15%\n• מעל 80% → 22%\nקבלן ביצוע: המקדם × 0.68.\nאת השדה "מקדם ידני" ממלאים רק אם המנהל אישר מקדם אחר (עד פי 2).' },
+    { k:['מסלול','קטן','גדול','300,000','300000','סכום קבוע','הוצאות מזכות'],
+      t:'איזה מסלול לבחור?',
+      a:'<b>מסלול הוצאות מזכות</b> — מחזור שנתי מעל 300,000 ₪ (תשומות + שכר).\n<b>מסלול עסקים קטנים</b> — מחזור 12,000–300,000 ₪, סכום קבוע לפי מדרגה × מקדם נזק.\nבוחרים בשדה "מסלול חישוב" לפי מחזור שנת הבסיס.' },
+    { k:['עוסק מיוחד','מפונים','ספר','פינוי'],
+      t:'מי נחשב עוסק מיוחד?',
+      a:'<b>עוסק מיוחד</b> = עסק באזור שפונה במרץ–יוני 2025, או מי שאירח מפונים. אצלו שנת הבסיס היא 2022 ותקופת הבסיס מרץ–אפריל 2023.\nבוחרים "עוסק מיוחד" בשדה "סיווג".' },
+    { k:['סוג עוסק','מזומן','קבלן','קבלן ביצוע','חברה','מורשה'],
+      t:'איזה סוג עוסק לבחור?',
+      a:'<b>עוסק מורשה / חברה</b> — תקופת זכאות מרץ–אפריל 2026.\n<b>בסיס מזומן</b> — מאי–יוני 2026.\n<b>קבלן ביצוע</b> — מאי–יוני 2026, והמקדם מוכפל ב-0.68.\nאיפה לבדוק: תעודת עוסק / האזור האישי במע"מ ← פרטי תיק (שיטת דיווח).' },
+    { k:['תנאי סף','זכאי','זכאות','לא זכאי','פנקסים','ספרים','נפתח','קשר סיבתי'],
+      t:'מה תנאי הסף לזכאות?',
+      a:'<b>תנאי סף</b> (סימון ב-4 התיבות בטופס):\n1. העסק נפתח והודיע לרשות המסים עד 28.2.2026\n2. הירידה נובעת מנזק עקיף של הלחימה\n3. פנקסים קבילים (אין אי-ניהול ספרים סופי)\n4. העסק פעיל (לא דווחה סגירה)\nבנוסף: ירידה של יותר מ-25% במחזור. אם לקוח לא זכאי — לוח "הסבר" מתחת לטבלה מראה בדיוק איזה תנאי נכשל.' },
+    { k:['הדפס','pdf','הדפסה','לשמור','שמירה'],
+      t:'איך מדפיסים / שומרים PDF?',
+      a:'לוחצים <b>"הדפסה / PDF 🖨️"</b> בראש העמוד. בחלון ההדפסה בוחרים "שמור כ-PDF" כיעד. הדוח מותאם לדף A4.' },
+    { k:['איפוס','לנקות','reset','חדש','לקוח חדש'],
+      t:'איך מתחילים לקוח חדש?',
+      a:'לוחצים <b>"איפוס 🔄"</b> בראש העמוד — כל השדות מתנקים וחוזרים לברירת מחדל. מקלידים שם לקוח ומזינים נתונים; החישוב מתעדכן אוטומטית.' },
+    { k:['הטמעה','iframe','אתר','שתילה','embed'],
+      t:'איך מטמיעים באתר?',
+      a:'בתחתית העמוד, בכרטיס <b>"שתילה באתר"</b>, לוחצים "העתק קוד הטמעה" ומדביקים את קוד ה-iframe בעורך האתר (בלוק HTML).' },
+    { k:['כהה','תצוגה','dark','בהיר'],
+      t:'איך מחליפים למצב כהה?',
+      a:'לוחצים <b>"מצב כהה 🌙"</b> בראש העמוד. לחיצה נוספת מחזירה למצב בהיר.' },
+    { k:['תקרה','מקסימום','תקרת פיצוי'],
+      t:'מה תקרת הפיצוי?',
+      a:'<b>מסלול הוצאות מזכות</b>: עד מחזור 100 מ\' ₪ — 1,200,000 ₪; 100–300 מ\' ₪ — (600,000 + 0.3% מהמחזור מעל 100 מ\') × 2; 300–400 מ\' ₪ — 2,400,000 ₪.\nהתקרה מוצגת בטבלת "פירוט חישוב".' },
+    { k:['הגשה','להגיש','תביעה','טופס','מערכת'],
+      t:'איך מגישים את התביעה בפועל?',
+      a:'ההגשה נעשית באתר <b>רשות המסים ← פיצויים ← הגשת תביעה מקוונת</b> (דרך האזור האישי או מייצג מורשה).\nלפני ההגשה כדאי להכין: דוחות מע"מ של תקופת הבסיס והזכאות, טפסי 102 של מרץ–אפריל 2026, ופרטי חשבון בנק.\nהסימולטור הוא אומדן בלבד — במקרים חריגים יש לבדוק לעומק.' },
+  ];
+
+  const SUGGESTIONS = ['איפה מוצאים תשומות שוטפות?','איפה מוצאים את השכר לעובדים?','איזה מסלול לבחור?','מה תנאי הסף לזכאות?','איך מדפיסים PDF?'];
+
+  const norm = s => (s||'').toLowerCase().replace(/["'״׳.,?!:;()\-–]/g,' ').replace(/\s+/g,' ').trim();
+
+  function kbSearch(q){
+    const nq = norm(q);
+    const words = nq.split(' ').filter(w => w.length > 1);
+    let best = null, bestScore = 0;
+    KB.forEach(item => {
+      let s = 0;
+      item.k.forEach(k => { const nk = norm(k); if (nk && nq.includes(nk)) s += 3 + nk.length/4; });
+      const nt = norm(item.t);
+      words.forEach(w => { if (w.length > 2 && nt.includes(w)) s += 1; });
+      if (s > bestScore) { bestScore = s; best = item; }
+    });
+    return bestScore >= 2 ? best : null;
+  }
+
+  // ---------- Form context for the AI ----------
+  function formContext(){
+    const v = id => { const e = el(id); if (!e) return ''; if (e.type === 'checkbox') return e.checked ? 'כן' : 'לא'; if (e.tagName === 'SELECT') return e.options[e.selectedIndex]?.text || e.value; return e.value; };
+    const t = id => (el(id)?.textContent || '').trim();
+    return [
+      'שם לקוח: ' + v('clientName'),
+      'סוג עוסק: ' + v('entityType'),
+      'מסלול: ' + v('track'),
+      'סיווג: ' + v('specialType'),
+      'מחזור שנת בסיס: ' + v('annualTurnover'),
+      'מחזור תקופת בסיס: ' + v('baseTurnover'),
+      'מחזור תקופת זכאות: ' + v('eligTurnover'),
+      'תשומות שוטפות שנה קודמת: ' + v('annualInputs'),
+      'עובדים מזכים: ' + v('employees'),
+      'שכר לעובדים מזכים: ' + v('wagePaid'),
+      'שכר ממוצע: ' + v('avgWage'),
+      'מקדם ידני: ' + (v('customFactor') || 'אוטומטי'),
+      'נפתח לפני 1.3.2026: ' + v('chkOpened') + ' | קשר סיבתי: ' + v('chkCausal') + ' | פנקסים קבילים: ' + v('chkBooks') + ' | עסק פעיל: ' + v('chkActive'),
+      'תוצאה — שיעור ירידה: ' + t('rDrop') + ', זכאות: ' + t('rElig') + ', תקופה: ' + t('rPeriod') + ', אומדן פיצוי: ' + t('rComp'),
+    ].join('\n');
+  }
+
+  const SYSTEM = [
+    'אתה עוזר מקצועי מובנה בסימולטור פיצוי לעסקים של משרד "יניב כהן רואה חשבון" (מבצע "שאגת הארי" 2026, חוק התוכנית לסיוע כלכלי (הוראת שעה) התשפ"ו–2026).',
+    'המשתמשים הם צוות המשרד ולקוחות. התפקיד שלך: להסביר איך לבצע פעולות בסימולטור, איפה למצוא כל נתון (דוחות מע"מ, טופס 102, האזור האישי ברשות המסים, תוכנת הנהלת חשבונות וכו\'), ולהסביר תוצאות חישוב.',
+    'ענה בעברית, בקצרה ובצורה מעשית — צעדים ממוספרים כשיש תהליך. השתמש בטקסט פשוט בלי Markdown כבד.',
+    'אם אינך בטוח בעובדה משפטית או במספר, אמור זאת והפנה לבדיקה מול רשות המסים או למשרד (074-7045405). אל תמציא קישורים.',
+    'כללי הסימולטור (מאגר ידע):',
+    KB.map(i => '• ' + i.t + ' — ' + i.a.replace(/<[^>]+>/g,'')).join('\n'),
+  ].join('\n');
+
+  // ---------- Claude API (streaming) ----------
+  const getKey = () => { try { return localStorage.getItem(KEY_STORE) || ''; } catch { return ''; } };
+  const aiEnabled = () => !!(AI_PROXY_URL || getKey());
+  const history = []; // {role, content}
+
+  async function askClaude(onText){
+    const url = AI_PROXY_URL || 'https://api.anthropic.com/v1/messages';
+    const headers = {
+      'content-type': 'application/json',
+      'anthropic-version': '2026-10-21',
+      'anthropic-beta': 'server-side-fallback-2026-07-01',
+    };
+    if (!AI_PROXY_URL) {
+      headers['x-api-key'] = getKey();
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    }
+    const msgs = history.slice(-12).map(m => ({ role: m.role, content: m.content }));
+    // Attach the live form state to the latest user turn
+    const last = msgs[msgs.length - 1];
+    last.content = 'נתוני הטופס כרגע:\n' + formContext() + '\n\nשאלה: ' + last.content;
+
+    const res = await fetch(url, {
+      method: 'POST', headers,
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 4000,
+        stream: true,
+        output_config: { effort: 'low' },
+        fallbacks: 'default',
+        system: SYSTEM,
+        messages: msgs,
+      }),
+    });
+    if (!res.ok) {
+      let msg = 'HTTP ' + res.status;
+      try { const j = await res.json(); msg = j.error?.message || msg; } catch {}
+      if (res.status === 401) msg = 'מפתח ה-API אינו תקין. בדקו בהגדרות ⚙️.';
+      throw new Error(msg);
+    }
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '', full = '', stop = null;
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0) {
+        const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        const line = chunk.split('\n').find(l => l.startsWith('data:'));
+        if (!line) continue;
+        let ev; try { ev = JSON.parse(line.slice(5)); } catch { continue; }
+        if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') { full += ev.delta.text; onText(full); }
+        else if (ev.type === 'message_delta' && ev.delta?.stop_reason) stop = ev.delta.stop_reason;
+        else if (ev.type === 'error') throw new Error(ev.error?.message || 'שגיאה');
+      }
+    }
+    if (stop === 'refusal' && !full) full = 'לא ניתן לענות על השאלה הזו. נסו לנסח אחרת או פנו למשרד: 074-7045405.';
+    return full;
+  }
+
+  // ---------- UI ----------
+  const body = el('aiBody'), input = el('aiInput'), send = el('aiSend');
+  const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  function addMsg(role, html){
+    const d = document.createElement('div');
+    d.className = 'ai-msg ' + role;
+    d.innerHTML = html;
+    body.appendChild(d);
+    body.scrollTop = body.scrollHeight;
+    return d;
+  }
+  function addChips(list){
+    const wrap = document.createElement('div');
+    wrap.className = 'ai-chips';
+    list.forEach(q => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'ai-chip'; b.textContent = q;
+      b.onclick = () => { wrap.remove(); handle(q); };
+      wrap.appendChild(b);
+    });
+    body.appendChild(wrap);
+    body.scrollTop = body.scrollHeight;
+  }
+  function updateMode(){ el('aiMode').textContent = aiEnabled() ? 'Claude' : 'מאגר ידע'; }
+
+  function welcome(){
+    body.innerHTML = '';
+    history.length = 0;
+    addMsg('bot', 'שלום! 👋 אני העוזר של הסימולטור.\nאפשר לשאול אותי <b>איך לבצע פעולה</b> או <b>איפה למצוא נתון</b> למילוי הטופס.' + (aiEnabled() ? '' : '\n<span class="ai-src">כרגע במצב מאגר ידע. לחיבור ל-Claude: ⚙️</span>'));
+    addChips(SUGGESTIONS);
+  }
+
+  async function handle(q){
+    q = (q || '').trim();
+    if (!q) return;
+    addMsg('user', esc(q));
+    input.value = '';
+    send.disabled = true;
+
+    if (aiEnabled()) {
+      history.push({ role: 'user', content: q });
+      const d = addMsg('bot', '<span class="ai-typing"><i></i><i></i><i></i></span>');
+      try {
+        const ans = await askClaude(txt => { d.innerHTML = esc(txt); body.scrollTop = body.scrollHeight; });
+        d.innerHTML = esc(ans || '—');
+        history.push({ role: 'assistant', content: ans || '—' });
+      } catch (e) {
+        history.pop();
+        const hit = kbSearch(q);
+        d.innerHTML = (hit ? hit.a + '\n' : '') + '<span class="ai-src">⚠️ לא ניתן להתחבר ל-Claude: ' + esc(String(e.message || e)) + (hit ? ' — התשובה ממאגר הידע.' : '') + '</span>';
+      }
+    } else {
+      const hit = kbSearch(q);
+      if (hit) {
+        addMsg('bot', hit.a + '<span class="ai-src">מתוך מאגר הידע של הסימולטור</span>');
+      } else {
+        addMsg('bot', 'לא מצאתי תשובה מדויקת במאגר. נסו אחת מהשאלות הבאות, או חברו את העוזר ל-Claude דרך ⚙️ לתשובות חופשיות.\nלעזרה אישית: <a href="tel:0747045405">074-7045405</a>');
+        addChips(KB.slice(0, 8).map(i => i.t));
+      }
+    }
+    send.disabled = false;
+    input.focus();
+  }
+
+  el('aiFab').addEventListener('click', () => {
+    const p = el('aiPanel');
+    const open = p.classList.toggle('open');
+    if (open) { if (!body.children.length) welcome(); input.focus(); }
+  });
+  el('aiClose').addEventListener('click', () => el('aiPanel').classList.remove('open'));
+  el('aiClear').addEventListener('click', welcome);
+  el('aiGear').addEventListener('click', () => { el('aiSettings').classList.toggle('open'); el('aiKey').value = getKey(); });
+  el('aiSaveKey').addEventListener('click', () => {
+    try { localStorage.setItem(KEY_STORE, el('aiKey').value.trim()); } catch {}
+    el('aiSettings').classList.remove('open'); updateMode(); welcome();
+  });
+  el('aiDelKey').addEventListener('click', () => {
+    try { localStorage.removeItem(KEY_STORE); } catch {}
+    el('aiKey').value = ''; updateMode(); welcome();
+  });
+  send.addEventListener('click', () => handle(input.value));
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handle(input.value); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') el('aiPanel').classList.remove('open'); });
+  updateMode();
+})();
+</script>
+
 </body>
 </html>
